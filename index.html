@@ -1,1 +1,353 @@
+<!doctype html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>مکمل A–Z اسٹور — میرا شاندار اسٹور</title>
+  <style>
+    :root{--accent:#0b6efd;--muted:#6b7280;--bg:#f6f8fb;--card:#fff;--glass:rgba(255,255,255,0.6)}
+    *{box-sizing:border-box}html,body{height:100%;margin:0;font-family:Inter, "Segoe UI", Tahoma, sans-serif;background:var(--bg);color:#111}
+    a{color:inherit}
+    .topbar{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;background:linear-gradient(90deg,#fff,#f8fbff);border-bottom:1px solid #e6eefb;position:sticky;top:0;z-index:40}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:52px;height:52px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#6fb1ff);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:18px}
+    .search{flex:1;display:flex;gap:8px;margin:0 12px}
+    .search input{flex:1;padding:10px 12px;border-radius:10px;border:1px solid #e6eefb;background:white}
+    .btn{padding:9px 12px;border-radius:10px;border:0;background:var(--accent);color:white;cursor:pointer}
+    .btn.ghost{background:transparent;border:1px solid #e9f0ff;color:inherit}
+    .main{display:grid;grid-template-columns:300px 1fr;gap:20px;max-width:1280px;margin:18px auto;padding:8px}
+    .sidebar{background:var(--card);padding:14px;border-radius:12px;box-shadow:0 8px 30px rgba(19,32,63,0.06)}
+    .cat-item{padding:8px;border-radius:8px;cursor:pointer}
+    .cat-item.active{background:#eef6ff;border:1px solid #d0e7ff}
+    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 10px 30px rgba(2,6,23,0.06);display:flex;flex-direction:column;gap:8px}
+    .thumb{height:180px;border-radius:8px;background-size:cover;background-position:center}
+    .p-title{font-weight:700}
+    .meta{font-size:13px;color:var(--muted)}
+    .price{font-weight:800}
+    .floating-cart{position:fixed;left:18px;bottom:18px;background:var(--card);padding:12px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.12);z-index:80;width:360px;max-height:70vh;overflow:auto}
+    .hidden{display:none}
+    .modal{position:fixed;inset:0;background:rgba(2,6,23,0.5);display:flex;align-items:center;justify-content:center;z-index:90}
+    .modal .panel{width:94%;max-width:980px;background:var(--card);padding:18px;border-radius:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    footer{padding:16px;text-align:center;color:var(--muted)}
+    @media(max-width:900px){.main{grid-template-columns:1fr;padding:12px}.floating-cart{left:12px;right:12px;width:auto}.modal .panel{grid-template-columns:1fr}}
+    /* small utilities */
+    .chip{padding:6px 8px;border-radius:999px;border:1px solid #eef2ff;background:white;font-size:13px}
+    .variant{padding:6px 8px;border-radius:8px;border:1px solid #e6eefb;background:transparent;cursor:pointer}
+    .variant.active{background:#eef6ff}
+    .badge{background:#fff3d9;padding:4px 8px;border-radius:999px;font-size:13px;color:#8a5b00;border:1px solid #fde7b8}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">MS</div>
+      <div>
+        <div style="font-weight:800">میرا شاندار اسٹور</div>
+        <div style="font-size:13px;color:var(--muted)">A–Z پروڈکٹس — مرد، خواتین، بچے — مکمل فیچرز</div>
+      </div>
+    </div>
+    <div class="search" role="search">
+      <input id="searchInput" placeholder="کسی پروڈکٹ کا نام، برانڈ یا ٹیگ لکھیں — مثال: 'جینز'" />
+      <button class="btn ghost" id="searchBtn">تلاش</button>
+      <button class="btn" id="cartToggle">کارٹ (<span id="cartCount">0</span>)</button>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn ghost" id="accountBtn">اکاؤنٹ</button>
+      <button class="btn" id="sellBtn">بیچیں</button>
+    </div>
+  </div>
+
+  <main class="main">
+    <aside class="sidebar">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <strong>زمرہ جات</strong><small class="meta">فلٹرز</small>
+      </div>
+      <div id="categoryList"></div>
+
+      <div style="margin-top:12px">
+        <strong>قیمت</strong>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <button class="variant" data-price="all">تمام</button>
+          <button class="variant" data-price="0-25">0-25$</button>
+          <button class="variant" data-price="25-60">25-60$</button>
+          <button class="variant" data-price="60-120">60-120$</button>
+          <button class="variant" data-price="120-9999">120$+</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <strong>خصوصیات</strong>
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+          <span class="badge">فری شپنگ</span>
+          <span class="badge">نیا</span>
+          <span class="badge">مقبول</span>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <strong>الف ب</strong>
+        <div id="alphaList" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
+      </div>
+
+      <div style="margin-top:12px">
+        <strong>درجہ بندی</strong>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="variant" data-rating="4">4★ اور اوپر</button>
+          <button class="variant" data-rating="3">3★ اور اوپر</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <strong>ایکسپورٹ / امپورٹ</strong>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn ghost" id="exportBtn">JSON Export</button>
+          <label class="btn ghost" style="cursor:pointer"><input id="importFile" type="file" accept="application/json" style="display:none">Import</label>
+        </div>
+        <div style="margin-top:8px;color:var(--muted);font-size:13px">Products JSON امپورٹ کریں یا ایکسپورٹ کریں</div>
+      </div>
+    </aside>
+
+    <section>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div>
+          <h2 style="margin:0">موجودہ اشیاء</h2>
+          <div class="meta" id="resultMeta">تمام اشیاء دکھائی جا رہی ہیں</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="sortSelect" style="padding:8px;border-radius:8px;border:1px solid #e6eefb">
+            <option value="price-asc">قیمت: کم → زیادہ</option>
+            <option value="price-desc">قیمت: زیادہ → کم</option>
+            <option value="name-asc">نام: A → Z</option>
+            <option value="name-desc">نام: Z → A</option>
+          </select>
+          <button class="btn ghost" id="clearFilters">فلٹر صاف کریں</button>
+        </div>
+      </div>
+
+      <div class="products" id="productGrid"></div>
+
+      <div style="display:flex;justify-content:center;margin-top:12px;gap:8px" id="pagination"></div>
+    </section>
+  </main>
+
+  <div class="floating-cart hidden" id="cartPanel">
+    <h3 style="margin:0 0 6px 0">آپ کا کارٹ</h3>
+    <div id="cartItems"></div>
+    <div id="cartEmpty" style="padding:20px;text-align:center;color:var(--muted)">کارٹ خالی ہے — شاپنگ شروع کریں!</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px">
+      <div>
+        <div class="meta">مجموعی:</div>
+        <div style="font-weight:800" id="cartTotal">$0.00</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="checkoutBtn">چیک آؤٹ</button>
+        <button class="btn ghost" id="clearCartBtn">خالی کریں</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="productModal" class="modal hidden" aria-hidden="true">
+    <div class="panel">
+      <div id="modalImages" style="min-height:320px;border-radius:8px;background:#f7f9ff;padding:10px"></div>
+      <div>
+        <h2 id="modalTitle"></h2>
+        <div class="meta" id="modalCategory"></div>
+        <div style="margin:8px 0" id="modalDesc"></div>
+        <div class="meta" id="modalTags"></div>
+        <div style="margin:10px 0" class="row"><div class="price" id="modalPrice"></div></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <div>
+            <div class="meta">سائز</div>
+            <div id="modalSizes" style="display:flex;gap:6px;margin-top:6px"></div>
+          </div>
+          <div>
+            <div class="meta">رنگ</div>
+            <div id="modalColors" style="display:flex;gap:6px;margin-top:6px"></div>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <input id="modalQty" type="number" value="1" min="1" style="width:90px;padding:8px;border-radius:8px;border:1px solid #e6eefb" />
+          <button class="btn" id="modalAdd">کارٹ میں ڈالیں</button>
+          <button class="btn ghost" id="modalWishlist">پسند</button>
+        </div>
+      </div>
+    </div>
+    <button onclick="closeModal()" style="position:absolute;left:18px;top:18px;background:transparent;border:0;font-size:22px;cursor:pointer">✕</button>
+  </div>
+
+  <footer>© <span id="year"></span> میرا شاندار اسٹور — اسٹاٹک A–Z demo — GitHub Pages پر چلائیں</footer>
+
+  <script>
+    // ---------------------------- Large product set A–Z (sample) ----------------------------
+    // ہر آئٹم: id, title, category, price, img, tags[], desc, rating, sizes[], colors[]
+    const PRODUCTS = [
+      {id:'a-alarabi-shirt',title:'Alarabi کپڑا T-Shirt',category:'men',price:19.99,img:'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=900&q=60',tags:['T-Shirt','Casual'],desc:'نرم کاٹن ٹی-شرٹ، روزمرہ پہناؤ کے لیے',rating:4.5,sizes:['S','M','L','XL'],colors:['Black','White']},
+      {id:'b-beauty-lipstick',title:'Beauty لپ اسٹک A',category:'women',price:12.5,img:'https://images.unsplash.com/photo-1506152983158-5f8b3f6b3c4d?w=900&q=60',tags:['Cosmetics','Makeup'],desc:'لمبے عرصے تک رہنے والی لپ اسٹک',rating:4.7,sizes:[],colors:['Red','Nude']},
+      {id:'c-child-jacket',title:'Childs Warm Jacket',category:'kids',price:39.99,img:'https://images.unsplash.com/photo-1542060745-5b3c7beccc79?w=900&q=60',tags:['Kids','Jacket'],desc:'گرم جیکٹ بچوں کے لیے',rating:4.3,sizes:['2Y','4Y','6Y'],colors:['Blue','Pink']},
+      {id:'d-diamond-ring',title:'Diamond Ring Replica',category:'women',price:89.99,img:'https://images.unsplash.com/photo-1520975912-0e0bdfc4b9d9?w=900&q=60',tags:['Jewelry'],desc:'خوبصورت رِنگ، تقریبات کے لیے',rating:4.6,sizes:['6','7','8'],colors:[]},
+      {id:'e-elegant-blazer',title:'Elegant بلیزر',category:'men',price:120.00,img:'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=900&q=60',tags:['Formal','Blazer'],desc:'ارهڈی اور کلاسک بلیزر',rating:4.4,sizes:['M','L','XL'],colors:['Navy']},
+      {id:'f-fitness-shoes',title:'Fitness راننگ جوتا',category:'shoes',price:79.99,img:'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=900&q=60',tags:['Shoes','Running'],desc:'دوڑ اور جم کے لیے بہترین',rating:4.5,sizes:[38,39,40,41,42],colors:['Black','White']},
+      {id:'g-garden-lamp',title:'Garden Lamp Decorative',category:'home',price:45.00,img:'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=900&q=60',tags:['Home','Decor'],desc:'باغ کے لیے خوبصورت لیمپ',rating:4.1,sizes:[],colors:['Bronze']},
+      {id:'h-happy-toy-car',title:'Happy ٹوی کار',category:'kids',price:15.00,img:'https://images.unsplash.com/photo-1526403224740-7b2a7a3b2c2b?w=900&q=60',tags:['Toys'],desc:'بچوں کے لیے رنگین کھلونا کار',rating:4.0,sizes:[],colors:['Red','Yellow']},
+      {id:'i-ideal-backpack',title:'Ideal Backpack',category:'accessories',price:34.99,img:'https://images.unsplash.com/photo-1514432324607-a09d9a1270f1?w=900&q=60',tags:['Bag','Travel'],desc:'مضبوط اور کشادہ بیگ',rating:4.2,sizes:[],colors:['Grey','Black']},
+      {id:'j-jolly-sandal',title:'Jolly سنڈل',category:'women',price:29.99,img:'https://images.unsplash.com/photo-1519741491627-3c5f86fbdf5b?w=900&q=60',tags:['Shoes','Sandals'],desc:'آرام دہ سنڈل',rating:4.0,sizes:[36,37,38,39],colors:['Gold','Silver']},
+      {id:'k-kids-sneaker',title:'Kids Sneaker Fun',category:'kids',price:24.99,img:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=900&q=60',tags:['Shoes','Kids'],desc:'رنگین سنیکرز بچوں کے لیے',rating:4.3,sizes:[28,29,30],colors:['Blue','Green']},
+      {id:'l-luxury-watch',title:'Luxury گھڑی (Replica)',category:'accessories',price:199.99,img:'https://images.unsplash.com/photo-1519741491627-3c5f86fbdf5b?w=900&q=60',tags:['Watch','Luxury'],desc:'چمکدار گھڑی، تحفے کے لیے',rating:4.6,sizes:[],colors:['Silver']},
+      {id:'m-maternity-dress',title:'Maternity Dress Comfort',category:'women',price:49.99,img:'https://images.unsplash.com/photo-1520975912-0e0bdfc4b9d9?w=900&q=60',tags:['Maternity','Dress'],desc:'حمل کے دوران آرام دہ ڈریس',rating:4.2,sizes:['S','M','L'],colors:['Beige']},
+      {id:'n-nightlamp',title:'Night Lamp Soft',category:'home',price:22.0,img:'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=900&q=60',tags:['Home','Light'],desc:'نرم روشنی دینے والا نائٹ لیمپ',rating:4.0,sizes:[],colors:['Warm']},
+      {id:'o-office-chair',title:'Office Chair Ergo',category:'home',price:150.0,img:'https://images.unsplash.com/photo-1493238792000-8113da705763?w=900&q=60',tags:['Furniture','Office'],desc:'ارگونومک آفس چیئر',rating:4.4,sizes:[],colors:['Black']},
+      {id:'p-party-dress',title:'Party Dress Glam',category:'women',price:89.99,img:'https://images.unsplash.com/photo-1520975912-0e0bdfc4b9d9?w=900&q=60',tags:['Dress','Party'],desc:'تقریبات کے لیے شاندار ڈریس',rating:4.5,sizes:['S','M','L'],colors:['Red','Black']},
+      {id:'q-quick-dry-towel',title:'Quick Dry تولیہ',category:'home',price:18.0,img:'https://images.unsplash.com/photo-1505691723518-36a4c5f5363a?w=900&q=60',tags:['Home','Towel'],desc:'تیزی سے خشک ہونے والا تولیہ',rating:4.1,sizes:[],colors:['White']},
+      {id:'r-royal-hat',title:'Royal Top Hat',category:'men',price:39.99,img:'https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?w=900&q=60',tags:['Hat','Formal'],desc:'خصوصی مواقع کے لیے ٹوپ',rating:4.0,sizes:[],colors:['Black']},
+      {id:'s-summer-shorts',title:'Summer شارٹس',category:'men',price:29.99,img:'https://images.unsplash.com/photo-1503342217505-b0a15dce370a?w=900&q=60',tags:['Shorts','Casual'],desc:'گرمیوں کے لیے ہلکے شارٹس',rating:4.2,sizes:['M','L'],colors:['Khaki','Blue']},
+      {id:'t-trendy-tote',title:'Trendy Tote Bag',category:'women',price:39.99,img:'https://images.unsplash.com/photo-1519741491627-3c5f86fbdf5b?w=900&q=60',tags:['Bag','Fashion'],desc:'فیمنین ٹوٹ بیگ',rating:4.3,sizes:[],colors:['Brown','Black']},
+      {id:'u-urban-jacket',title:'Urban بارش جیکٹ',category:'men',price:69.99,img:'https://images.unsplash.com/photo-1542060745-5b3c7beccc79?w=900&q=60',tags:['Jacket','Outdoor'],desc:'بارش اور سردی سے بچانے والی جیکٹ',rating:4.2,sizes:['M','L','XL'],colors:['Olive']},
+      {id:'v-vintage-scarf',title:'Vintage اسکارف',category:'women',price:24.0,img:'https://images.unsplash.com/photo-1506152983158-5f8b3f6b3c4d?w=900&q=60',tags:['Scarf','Fashion'],desc:'رنگین ونٹیج اسکارف',rating:4.0,sizes:[],colors:['Multi']},
+      {id:'w-winter-boot',title:'Winter Boot Pro',category:'shoes',price:99.99,img:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=900&q=60',tags:['Boots','Winter'],desc:'سردیوں کے لیے گرم بوٹ',rating:4.5,sizes:[40,41,42,43],colors:['Brown']},
+      {id:'x-xmas-decor',title:'Xmas Decor Set',category:'home',price:27.0,img:'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=900&q=60',tags:['Decor','Seasonal'],desc:'کرسمس کے لیے چھوٹا ڈیکور پیک',rating:4.1,sizes:[],colors:['Green','Red']},
+      {id:'y-youth-cap',title:'Youth Cap Snapback',category:'accessories',price:14.99,img:'https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?w=900&q=60',tags:['Cap','Casual'],desc:'سنیپ بیک کیپ نوجوانوں کے لیے',rating:4.0,sizes:[],colors:['Black','Blue']},
+      {id:'z-zen-mat',title:'Zen Yoga Mat',category:'home',price:32.0,img:'https://images.unsplash.com/photo-1503342217505-b0a15dce370a?w=900&q=60',tags:['Fitness','Yoga'],desc:'نرم یوگا میٹ',rating:4.4,sizes:[],colors:['Purple','Grey']}
+    ];
+
+    // ---------------------------- STATE ----------------------------
+    let state = {products:PRODUCTS.slice(),filter:{category:'all',price:'all',q:'',alpha:null,rating:0},sort:'price-asc',page:1,perPage:12};
+
+    const qs=id=>document.getElementById(id);
+    const el=(t,c)=>{const e=document.createElement(t); if(c) e.className=c; return e};
+    const formatPrice=p=> '$'+Number(p).toFixed(2);
+
+    // ---------------------------- RENDER UI ----------------------------
+    function renderCategories(){
+      const cats = ['all','men','women','kids','shoes','accessories','home'];
+      const node = document.getElementById('categoryList'); node.innerHTML='';
+      cats.forEach(c=>{
+        const d = el('div','cat-item'); d.textContent = c==='all'?'تمام':capitalize(c);
+        d.dataset.cat=c; d.addEventListener('click',()=>{ state.filter.category=c; state.page=1; applyFilters(); });
+        node.appendChild(d);
+      });
+      updateActiveCat();
+    }
+
+    function renderAlpha(){
+      const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''); const node = qs('alphaList'); node.innerHTML='';
+      const allb = el('button'); allb.className='variant'; allb.textContent='ALL'; allb.onclick=()=>{state.filter.alpha=null;applyFilters();}; node.appendChild(allb);
+      alpha.forEach(ch=>{const b=el('button'); b.className='variant'; b.textContent=ch; b.onclick=()=>{state.filter.alpha=ch; state.page=1; applyFilters();}; node.appendChild(b);});
+    }
+
+    function renderProducts(list){
+      const grid = qs('productGrid'); grid.innerHTML='';
+      const start=(state.page-1)*state.perPage; const paged=list.slice(start,start+state.perPage);
+      if(paged.length===0){const c=el('div','card'); c.textContent='کوئی نتیجہ نہیں ملا۔'; grid.appendChild(c); qs('resultMeta').textContent='0 نتائج'; return;}
+      qs('resultMeta').textContent=`${list.length} نتائج — صفحہ ${state.page}`;
+      paged.forEach(p=>{
+        const card = el('div','card');
+        const thumb = el('div','thumb'); thumb.style.backgroundImage=`url(${p.img})`;
+        const title = el('div','p-title'); title.textContent=p.title;
+        const meta = el('div','meta'); meta.textContent=p.tags.join(' • ');
+        const price = el('div','price'); price.textContent=formatPrice(p.price);
+        const row = el('div'); row.style.display='flex'; row.style.gap='8px'; row.style.alignItems='center';
+        const add = el('button','btn'); add.textContent='کارٹ میں ڈالیں'; add.onclick=()=>addToCart(p.id,1);
+        const view = el('button','btn ghost'); view.textContent='جزئیات'; view.onclick=()=>openModal(p.id);
+        const wish = el('button','btn ghost'); wish.textContent='❤️'; wish.onclick=()=>toggleWishlist(p.id);
+        row.appendChild(price); row.appendChild(add); row.appendChild(view); row.appendChild(wish);
+        card.appendChild(thumb); card.appendChild(title); card.appendChild(meta); card.appendChild(row);
+        grid.appendChild(card);
+      });
+      renderPagination(list.length);
+      updateActiveCat();
+    }
+
+    function renderPagination(total){
+      const node = qs('pagination'); node.innerHTML=''; const pages=Math.max(1,Math.ceil(total/state.perPage));
+      for(let i=1;i<=pages;i++){ const b=el('button'); b.className='variant'; b.textContent=i; if(i===state.page) b.classList.add('active'); b.onclick=()=>{state.page=i; renderProducts(filterAndSort());}; node.appendChild(b); }
+    }
+
+    function updateActiveCat(){ document.querySelectorAll('.cat-item').forEach(el=>{ el.classList.toggle('active', el.dataset.cat===state.filter.category); }); }
+
+    // ---------------------------- FILTER & SORT ----------------------------
+    function filterAndSort(){
+      let out = state.products.slice(); const f=state.filter;
+      if(f.q && f.q.trim()!==''){ const q=f.q.toLowerCase(); out = out.filter(p=> p.title.toLowerCase().includes(q) || p.tags.join(' ').toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)); }
+      if(f.category && f.category!=='all') out=out.filter(p=>p.category===f.category);
+      if(f.alpha) out=out.filter(p=>p.title[0].toUpperCase()===f.alpha);
+      if(f.price && f.price!=='all'){ const [min,max]=f.price.split('-').map(Number); out=out.filter(p=>p.price>=min && p.price<=max); }
+      if(f.rating && f.rating>0) out=out.filter(p=> p.rating>=f.rating);
+      // sort
+      const s = state.sort;
+      if(s==='price-asc') out.sort((a,b)=>a.price-b.price);
+      if(s==='price-desc') out.sort((a,b)=>b.price-a.price);
+      if(s==='name-asc') out.sort((a,b)=> a.title.localeCompare(b.title));
+      if(s==='name-desc') out.sort((a,b)=> b.title.localeCompare(a.title));
+      return out;
+    }
+
+    // ---------------------------- CART & WISHLIST (localStorage) ----------------------------
+    function getCart(){try{return JSON.parse(localStorage.getItem('cart_v2')||'{}')}catch(e){return{}}}
+    function saveCart(c){localStorage.setItem('cart_v2',JSON.stringify(c)); renderCart();}
+    function addToCart(id,qty=1){ const cart=getCart(); cart[id]=(cart[id]||0)+qty; saveCart(cart); animateCartCount(); }
+    function setCartItem(id,qty){ const cart=getCart(); if(qty<=0) delete cart[id]; else cart[id]=qty; saveCart(cart); }
+    function clearCart(){ localStorage.removeItem('cart_v2'); renderCart(); }
+
+    function renderCart(){ const panel=qs('cartPanel'); const itemsDiv=qs('cartItems'); itemsDiv.innerHTML=''; const cart=getCart(); const ids=Object.keys(cart); qs('cartCount').textContent = ids.reduce((s,id)=> s+cart[id], 0);
+      if(ids.length===0){qs('cartEmpty').style.display='block'; itemsDiv.style.display='none'; qs('cartTotal').textContent='$0.00'; return;} qs('cartEmpty').style.display='none'; itemsDiv.style.display='block'; let total=0; ids.forEach(id=>{ const p=PRODUCTS.find(x=>x.id===id); if(!p) return; const qty=cart[id]; total+=p.price*qty; const row=el('div'); row.style.display='flex'; row.style.gap='8px'; row.style.alignItems='center'; row.style.padding='8px 0'; row.innerHTML = `<div style="width:64px;height:64px;background-image:url(${p.img});background-size:cover;border-radius:8px"></div><div style="flex:1"><div style="font-weight:700">${p.title}</div><div class="meta">${formatPrice(p.price)} × ${qty} = ${formatPrice(p.price*qty)}</div><div style="margin-top:6px;display:flex;gap:6px"><button class="btn ghost" data-action="dec" data-id="${id}">−</button><button class="btn ghost" data-action="inc" data-id="${id}">+</button><button class="btn ghost" data-action="del" data-id="${id}">حذف</button></div></div>`; itemsDiv.appendChild(row);
+      }); qs('cartTotal').textContent = formatPrice(total);
+      itemsDiv.querySelectorAll('[data-action]').forEach(b=>{ b.addEventListener('click',()=>{ const id=b.dataset.id; const action=b.dataset.action; const cart=getCart(); if(action==='inc'){ cart[id] = (cart[id]||0)+1; } if(action==='dec'){ cart[id] = Math.max(0,(cart[id]||0)-1); if(cart[id]===0) delete cart[id]; } if(action==='del'){ delete cart[id]; } saveCart(cart); }); });
+    }
+
+    function toggleWishlist(id){ let w = JSON.parse(localStorage.getItem('wish_v1')||'[]'); if(w.includes(id)){ w = w.filter(x=>x!==id); } else { w.push(id); } localStorage.setItem('wish_v1',JSON.stringify(w)); alert('Wishlist updated'); }
+
+    function animateCartCount(){ const c=qs('cartCount'); c.style.transform='scale(1.2)'; setTimeout(()=>c.style.transform='scale(1)',180); }
+
+    // ---------------------------- MODAL ----------------------------
+    function openModal(id){ const p = PRODUCTS.find(x=>x.id===id); if(!p) return; qs('productModal').classList.remove('hidden'); qs('productModal').setAttribute('aria-hidden','false'); qs('modalTitle').textContent=p.title; qs('modalDesc').textContent=p.desc; qs('modalCategory').textContent='زمرہ: '+capitalize(p.category); qs('modalTags').textContent = p.tags.join(' • '); qs('modalPrice').textContent = formatPrice(p.price); qs('modalImages').innerHTML = `<div style="height:100%;background-image:url(${p.img});background-size:cover;border-radius:8px"></div>`; // sizes
+      const sizesDiv = qs('modalSizes'); sizesDiv.innerHTML=''; (p.sizes||[]).forEach(s=>{ const b=el('button'); b.className='variant'; b.textContent=s; b.onclick=()=>{ document.querySelectorAll('#modalSizes .variant').forEach(x=>x.classList.remove('active')); b.classList.add('active'); }; sizesDiv.appendChild(b); });
+      const colorsDiv = qs('modalColors'); colorsDiv.innerHTML=''; (p.colors||[]).forEach(c=>{ const b=el('button'); b.className='variant'; b.textContent=c; b.onclick=()=>{ document.querySelectorAll('#modalColors .variant').forEach(x=>x.classList.remove('active')); b.classList.add('active'); }; colorsDiv.appendChild(b); });
+      qs('modalQty').value=1; qs('modalAdd').onclick = ()=>{ addToCart(p.id, Number(qs('modalQty').value)); closeModal(); };
+    }
+    function closeModal(){ qs('productModal').classList.add('hidden'); qs('productModal').setAttribute('aria-hidden','true'); }
+
+    // ---------------------------- SEARCH & EVENTS ----------------------------
+    qs('searchBtn').addEventListener('click', ()=>{ state.filter.q = qs('searchInput').value; state.page=1; applyFilters(); });
+    qs('searchInput').addEventListener('keydown', e=>{ if(e.key==='Enter'){ state.filter.q = qs('searchInput').value; state.page=1; applyFilters(); }});
+    qs('clearFilters').addEventListener('click', ()=>{ state.filter={category:'all',price:'all',q:'',alpha:null,rating:0}; qs('searchInput').value=''; state.page=1; applyFilters(); });
+    document.querySelectorAll('[data-price]').forEach(b=>b.addEventListener('click', ()=>{ state.filter.price = b.dataset.price; state.page=1; applyFilters(); }));
+    document.querySelectorAll('[data-rating]').forEach(b=>b.addEventListener('click', ()=>{ state.filter.rating = Number(b.dataset.rating); state.page=1; applyFilters(); }));
+    qs('sortSelect').addEventListener('change', ()=>{ state.sort = qs('sortSelect').value; state.page=1; applyFilters(); });
+
+    // export / import
+    qs('exportBtn').addEventListener('click', ()=>{ const data = JSON.stringify(PRODUCTS,null,2); const blob = new Blob([data],{type:'application/json'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='products.json'; a.click(); URL.revokeObjectURL(url); });
+    qs('importFile').addEventListener('change', (e)=>{ const f=e.target.files[0]; if(!f) return; const reader=new FileReader(); reader.onload = ()=>{ try{ const arr = JSON.parse(reader.result); if(Array.isArray(arr)){ state.products = arr; alert('Products imported — صفحہ ریفریش کریں یا فلٹرز اپلائی کریں'); applyFilters(); } else alert('Invalid JSON format'); } catch(err){ alert('Error parsing JSON'); } }; reader.readAsText(f); });
+
+    // cart toggle
+    qs('cartToggle').addEventListener('click', ()=>{ const panel=qs('cartPanel'); panel.classList.toggle('hidden'); renderCart(); });
+    qs('clearCartBtn').addEventListener('click', ()=>{ if(confirm('کارٹ خالی کریں؟')) clearCart(); });
+
+    // checkout (mock)
+    qs('checkoutBtn').addEventListener('click', ()=>{
+      const cart = getCart(); if(Object.keys(cart).length===0){ alert('آپ کا کارٹ خالی ہے'); return; }
+      const name = prompt('اپنا نام درج کریں'); if(!name) return; const addr = prompt('پتہ درج کریں'); if(!addr) return; alert('شکریہ '+name+' — آپ کا آرڈر جمع ہوگیا (نمونہ چیک آؤٹ)'); clearCart(); qs('cartPanel').classList.add('hidden');
+    });
+
+    // export current state on unload
+    window.addEventListener('beforeunload', ()=>{ localStorage.setItem('last_state', JSON.stringify(state)); });
+
+    // product card click open modal
+    document.getElementById('productGrid').addEventListener('click',(e)=>{ const card = e.target.closest('.card'); if(!card) return; const img = card.querySelector('.thumb').style.backgroundImage; if(!img) return; const url = img.slice(5,-2); const p = PRODUCTS.find(x=>x.img===url); if(p) openModal(p.id); });
+
+    // helper
+    function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+    function applyFilters(){ const out = filterAndSort(); renderProducts(out); updateActiveCatUI(); }
+    function updateActiveCatUI(){ document.querySelectorAll('.cat-item').forEach(el=> el.classList.toggle('active', el.dataset.cat===state.filter.category)); }
+
+    // wishlist on load indicator (not rendered fully)
+    function init(){ qs('year').textContent = new Date().getFullYear(); renderCategories(); renderAlpha(); applyFilters(); renderCart(); }
+    init();
+
+    // keyboard close modal
+    document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeModal(); });
+  </script>
+</body>
+</html>
 
